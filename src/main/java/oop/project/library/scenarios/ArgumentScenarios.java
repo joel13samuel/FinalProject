@@ -38,7 +38,26 @@ public final class ArgumentScenarios {
     }
 
     public static Map<String, Object> fizzbuzz(String arguments) throws RuntimeException {
-        throw new UnsupportedOperationException("TODO (PoC)");
+        Input input = new Input(arguments);
+        BasicArgs args = input.parseBasicArgs();
+
+        if (args.positional().size() != 1 || !args.named().isEmpty()) {
+            throw new RuntimeException("fizzbuzz only takes exactly 1 positional argument.");
+        }
+
+        try {
+            String numberString = args.positional().get(0);
+            int number = Integer.parseInt(numberString);
+
+            if (number <= 0) {
+                throw new RuntimeException("The number must be bigger than 0.");
+            }
+
+            return Map.of("number", number);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("fizzbuzz argument must be an integer.");
+        }
+
     }
 
     public static Map<String, Object> difficulty(String arguments) throws RuntimeException {
