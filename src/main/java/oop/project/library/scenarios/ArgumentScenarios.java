@@ -78,7 +78,20 @@ public final class ArgumentScenarios {
     }
 
     public static Map<String, Object> date(String arguments) throws RuntimeException {
-        throw new UnsupportedOperationException("TODO (PoC)");
+        Input input = new Input(arguments);
+        BasicArgs args = input.parseBasicArgs();
+
+        if (args.positional().size() != 1 || !args.named().isEmpty()) {
+            throw new RuntimeException("date expects exactly 1 positional argument.");
+        }
+
+        try {
+            String dateString = args.positional().get(0);
+            LocalDate date = LocalDate.parse(dateString);
+            return Map.of("date", date);
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("date argument must be a valid date.");
+        }
     }
 
 }
