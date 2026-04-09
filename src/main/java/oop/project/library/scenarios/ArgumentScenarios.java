@@ -34,7 +34,24 @@ public final class ArgumentScenarios {
     }
 
     public static Map<String, Object> sub(String arguments) throws RuntimeException {
-        throw new UnsupportedOperationException("TODO (PoC)");
+        Input input = new Input(arguments);
+        BasicArgs args = input.parseBasicArgs();
+
+        if (args.positional().size() != 2 || !args.named().isEmpty()) {
+            throw new RuntimeException("sub expects exactly 2 positional arguments.");
+        }
+
+        try {
+            String leftString = args.positional().get(0);
+            String rightString = args.positional().get(1);
+
+            double left = Double.parseDouble(leftString);
+            double right = Double.parseDouble(rightString);
+
+            return Map.of("left", left, "right", right);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("sub arguments must be doubles.");
+        }
     }
 
     public static Map<String, Object> fizzbuzz(String arguments) throws RuntimeException {
