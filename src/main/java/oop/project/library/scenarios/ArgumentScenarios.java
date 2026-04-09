@@ -3,6 +3,8 @@ package oop.project.library.scenarios;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import oop.project.library.input.BasicArgs;
+import oop.project.library.input.Input;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -11,7 +13,24 @@ import java.util.Map;
 public final class ArgumentScenarios {
 
     public static Map<String, Object> add(String arguments) throws RuntimeException {
-        throw new UnsupportedOperationException("TODO (PoC)");
+        Input input = new Input(arguments);
+        BasicArgs args = input.parseBasicArgs();
+
+        if (args.positional().size() != 2 || !args.named().isEmpty()) {
+            throw new RuntimeException("add only takes exactly 2 positional arguments.");
+        }
+
+        try {
+            String leftString = args.positional().get(0);
+            String rightString = args.positional().get(1);
+
+            int left = Integer.parseInt(leftString);
+            int right = Integer.parseInt(rightString);
+
+            return Map.of("left", left, "right", right);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("add arguments must be integers.");
+        }
     }
 
     public static Map<String, Object> sub(String arguments) throws RuntimeException {
