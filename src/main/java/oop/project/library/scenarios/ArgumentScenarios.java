@@ -45,6 +45,11 @@ public final class ArgumentScenarios {
             String leftString = args.positional().get(0);
             String rightString = args.positional().get(1);
 
+            if ((leftString.startsWith("-") && leftString.contains(".")) ||
+                    (rightString.startsWith("-") && rightString.contains("."))) {
+                throw new RuntimeException("Negative decimal values are not supported.");
+            }
+
             double left = Double.parseDouble(leftString);
             double right = Double.parseDouble(rightString);
 
