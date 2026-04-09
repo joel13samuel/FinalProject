@@ -61,7 +61,20 @@ public final class ArgumentScenarios {
     }
 
     public static Map<String, Object> difficulty(String arguments) throws RuntimeException {
-        throw new UnsupportedOperationException("TODO (PoC)");
+        Input input = new Input(arguments);
+        BasicArgs args = input.parseBasicArgs();
+
+        if (args.positional().size() != 1 || !args.named().isEmpty()) {
+            throw new RuntimeException("difficulty only takes exactly 1 positional argument.");
+        }
+
+        String difficulty = args.positional().get(0);
+
+        if (!difficulty.equals("easy") && !difficulty.equals("medium") && !difficulty.equals("hard")) {
+            throw new RuntimeException("difficulty must be easy, medium, or hard.");
+        }
+
+        return Map.of("difficulty", difficulty);
     }
 
     public static Map<String, Object> date(String arguments) throws RuntimeException {
