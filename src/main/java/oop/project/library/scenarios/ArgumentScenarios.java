@@ -3,6 +3,7 @@ package oop.project.library.scenarios;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import oop.project.library.argument.IntegerArgumentType;
 import oop.project.library.input.BasicArgs;
 import oop.project.library.input.Input;
 
@@ -17,18 +18,20 @@ public final class ArgumentScenarios {
         BasicArgs args = input.parseBasicArgs();
 
         if (args.positional().size() != 2 || !args.named().isEmpty()) {
-            throw new RuntimeException("add only takes exactly 2 positional arguments.");
+            throw new RuntimeException("add expects exactly 2 positional arguments.");
         }
+
+        IntegerArgumentType integerArgumentType = new IntegerArgumentType();
 
         try {
             String leftString = args.positional().get(0);
             String rightString = args.positional().get(1);
 
-            int left = Integer.parseInt(leftString);
-            int right = Integer.parseInt(rightString);
+            int left = integerArgumentType.parse(leftString);
+            int right = integerArgumentType.parse(rightString);
 
             return Map.of("left", left, "right", right);
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("add arguments must be integers.");
         }
     }
