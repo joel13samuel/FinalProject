@@ -3,15 +3,13 @@ package oop.project.library.scenarios;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import oop.project.library.argument.CustomArgumentType;
-import oop.project.library.argument.DoubleArgumentType;
-import oop.project.library.argument.IntegerArgumentType;
-import oop.project.library.argument.StringArgumentType;
+import oop.project.library.argument.*;
 import oop.project.library.input.BasicArgs;
 import oop.project.library.input.Input;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Map;
 
 public final class ArgumentScenarios {
@@ -75,22 +73,17 @@ public final class ArgumentScenarios {
             throw new RuntimeException("fizzbuzz only takes exactly 1 positional argument.");
         }
 
-        IntegerArgumentType integerArgumentType = new IntegerArgumentType();
+        RangedIntegerArgumentType rangedIntegerArgumentType =
+                new RangedIntegerArgumentType(1, Integer.MAX_VALUE);
 
         String numberString = args.positional().get(0);
-        int number;
 
         try {
-            number = integerArgumentType.parse(numberString);
+            int number = rangedIntegerArgumentType.parse(numberString);
+            return Map.of("number", number);
         } catch (RuntimeException e) {
-            throw new RuntimeException("fizzbuzz argument must be an integer.");
+            throw new RuntimeException("fizzbuzz argument must be a positive integer.");
         }
-
-        if (number <= 0) {
-            throw new RuntimeException("The number must be bigger than 0.");
-        }
-
-        return Map.of("number", number);
     }
 
     public static Map<String, Object> difficulty(String arguments) throws RuntimeException {
@@ -101,20 +94,17 @@ public final class ArgumentScenarios {
             throw new RuntimeException("difficulty only takes exactly 1 positional argument.");
         }
 
-        StringArgumentType stringArgumentType = new StringArgumentType();
+        ChoiceStringArgumentType choiceStringArgumentType =
+                new ChoiceStringArgumentType(List.of("easy", "medium", "hard"));
 
-        String difficulty;
+        String difficultyString = args.positional().get(0);
+
         try {
-            difficulty = stringArgumentType.parse(args.positional().get(0));
+            String difficulty = choiceStringArgumentType.parse(difficultyString);
+            return Map.of("difficulty", difficulty);
         } catch (RuntimeException e) {
-            throw new RuntimeException("difficulty argument must be a string.");
-        }
-
-        if (!difficulty.equals("easy") && !difficulty.equals("medium") && !difficulty.equals("hard")) {
             throw new RuntimeException("difficulty must be easy, medium, or hard.");
         }
-
-        return Map.of("difficulty", difficulty);
     }
 
     public static Map<String, Object> date(String arguments) throws RuntimeException {
