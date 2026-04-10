@@ -3,7 +3,10 @@ package oop.project.library.scenarios;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import oop.project.library.argument.CustomArgumentType;
+import oop.project.library.argument.DoubleArgumentType;
 import oop.project.library.argument.IntegerArgumentType;
+import oop.project.library.argument.StringArgumentType;
 import oop.project.library.input.BasicArgs;
 import oop.project.library.input.Input;
 
@@ -44,20 +47,22 @@ public final class ArgumentScenarios {
             throw new RuntimeException("sub expects exactly 2 positional arguments.");
         }
 
+        DoubleArgumentType doubleArgumentType = new DoubleArgumentType();
+
+        String leftString = args.positional().get(0);
+        String rightString = args.positional().get(1);
+
+        if ((leftString.startsWith("-") && leftString.contains(".")) ||
+                (rightString.startsWith("-") && rightString.contains("."))) {
+            throw new RuntimeException("Negative decimal values are not supported.");
+        }
+
         try {
-            String leftString = args.positional().get(0);
-            String rightString = args.positional().get(1);
-
-            if ((leftString.startsWith("-") && leftString.contains(".")) ||
-                    (rightString.startsWith("-") && rightString.contains("."))) {
-                throw new RuntimeException("Negative decimal values are not supported.");
-            }
-
-            double left = Double.parseDouble(leftString);
-            double right = Double.parseDouble(rightString);
+            double left = doubleArgumentType.parse(leftString);
+            double right = doubleArgumentType.parse(rightString);
 
             return Map.of("left", left, "right", right);
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("sub arguments must be doubles.");
         }
     }
@@ -70,19 +75,22 @@ public final class ArgumentScenarios {
             throw new RuntimeException("fizzbuzz only takes exactly 1 positional argument.");
         }
 
+        IntegerArgumentType integerArgumentType = new IntegerArgumentType();
+
+        String numberString = args.positional().get(0);
+        int number;
+
         try {
-            String numberString = args.positional().get(0);
-            int number = Integer.parseInt(numberString);
-
-            if (number <= 0) {
-                throw new RuntimeException("The number must be bigger than 0.");
-            }
-
-            return Map.of("number", number);
-        } catch (NumberFormatException e) {
+            number = integerArgumentType.parse(numberString);
+        } catch (RuntimeException e) {
             throw new RuntimeException("fizzbuzz argument must be an integer.");
         }
 
+        if (number <= 0) {
+            throw new RuntimeException("The number must be bigger than 0.");
+        }
+
+        return Map.of("number", number);
     }
 
     public static Map<String, Object> difficulty(String arguments) throws RuntimeException {
@@ -93,7 +101,14 @@ public final class ArgumentScenarios {
             throw new RuntimeException("difficulty only takes exactly 1 positional argument.");
         }
 
-        String difficulty = args.positional().get(0);
+        StringArgumentType stringArgumentType = new StringArgumentType();
+
+        String difficulty;
+        try {
+            difficulty = stringArgumentType.parse(args.positional().get(0));
+        } catch (RuntimeException e) {
+            throw new RuntimeException("difficulty argument must be a string.");
+        }
 
         if (!difficulty.equals("easy") && !difficulty.equals("medium") && !difficulty.equals("hard")) {
             throw new RuntimeException("difficulty must be easy, medium, or hard.");
@@ -110,11 +125,14 @@ public final class ArgumentScenarios {
             throw new RuntimeException("date expects exactly 1 positional argument.");
         }
 
+        CustomArgumentType<LocalDate> dateArgumentType = new CustomArgumentType<>(LocalDate::parse);
+
+        String dateString = args.positional().get(0);
+
         try {
-            String dateString = args.positional().get(0);
-            LocalDate date = LocalDate.parse(dateString);
+            LocalDate date = dateArgumentType.parse(dateString);
             return Map.of("date", date);
-        } catch (DateTimeParseException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("date argument must be a valid date.");
         }
     }
