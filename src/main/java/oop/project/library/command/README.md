@@ -26,6 +26,13 @@ Less-good decisions:
 
 ### Individual Review (Argument Lead)
 
+
+- I think one good part of the Argument system is that it gave the Command side reusable parsers like `IntegerArgumentType`, `DoubleArgumentType`, and `BooleanArgumentType`, so the command code did not have to keep rewriting the same parsing logic.
+- Another good decision was supporting custom and validation-based argument types. That made the overall design feel more flexible and gave the Command side a cleaner way to enforce certain input rules.
+
+- One thing I do not like as much is that some validation and exception handling still ends up happening inside the command scenarios instead of being fully handled by the Argument system.
+- I also think the current Argument API is useful, but still a little low-level. The Command side can use it, but the connection between the two systems does not feel as clean as it probably should yet.
+
 ### Team Review
 
 Default values are currently hardcoded per scenario, for instance `echo` defaults to `"echo,echo,echo..."`. We need a cleaner general solution for MVP, something built into the command definition rather than scattered across methods. We also haven't fully decided how subcommands should work. The current `dispatch` implementation is a placeholder and will need to be rethought once we have a proper command builder in place.
