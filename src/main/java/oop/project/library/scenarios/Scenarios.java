@@ -7,10 +7,9 @@ import java.util.Map;
 public final class Scenarios {
 
     public static Map<String, Object> parse(String command) {
-        // Still a bit hacky to extract the base command, but necessary.
         var index = command.indexOf(" ");
-        var base = index != -1 ? command.substring(0, index) : "";
-        var arguments = index != -1 ? " ".repeat(base.length()) + command.substring(index) : ""; //maintain index
+        var base = index != -1 ? command.substring(0, index) : command;
+        var arguments = index != -1 ? " ".repeat(base.length()) + command.substring(index) : "";
         return switch (base) {
             case "input" -> input(arguments);
             case "add" -> ArgumentScenarios.add(arguments);
