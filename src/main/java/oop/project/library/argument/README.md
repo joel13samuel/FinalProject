@@ -26,13 +26,13 @@ Handles parsing a single String input value into typed data.
 
 ### Individual Review (Command Lead)
 
-Good decisions:
-- Using `Input.parseValue()` directly for `search` was a good choice to get it working. Trying to use optional flags into `parseBasicArgs` would have required modifying the input system which overcomplicated things
-- Using the `ArgumentType` classes for parsing keeps the command methods thin and lets validation logic live in one place.
+- One thing that looks promising is that the Command side can build on top of `ArgumentType<T>` instead of doing all parsing itself. That should reduce repeated logic later.
 
-Less-good decisions:
-- `dispatch` uses a hardcoded 'if' branch to handle `static` vs `dynamic`. It works for now but will need a real subcommand abstraction for later implementation
-- Returning `Map<String, Object>` means callers have no type safety/post-condition. Getting an `int` out requires a cast, which is exactly the problem the library is supposed to solve.
+- Another good part is that positional and named arguments can stay a Command-system problem, while the Argument system stays focused on parsing one value at a time.
+
+- One thing that still feels unclear is exactly how the Command system will store and use typed arguments internally. The Argument system is in place, but the connection between the two systems could be more clearly defined.
+
+- Another concern is that because we built the PoC scenario-first, there is still some repeated parsing logic in the scenarios that a fuller Command API would probably want to clean up later.
 
 
 ### Team Review
