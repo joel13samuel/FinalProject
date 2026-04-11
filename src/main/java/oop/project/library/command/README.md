@@ -28,4 +28,4 @@ Less-good decisions:
 
 ### Team Review
 
-Default values are currently hardcoded per scenario (e.g. `echo` defaults to `"echo,echo,echo..."`). We need a cleaner general solution for MVP, something built into the command definition rather than scattered across methods. We also haven't fully decided how subcommands should work. The current `dispatch` implementation is a placeholder and will need to be rethought once we have a proper command builder in place.
+Default values are currently hardcoded per scenario, for instance `echo` defaults to `"echo,echo,echo..."`. We need a cleaner general solution for MVP, something built into the command definition rather than scattered across methods. We also haven't fully decided how subcommands should work. The current `dispatch` implementation is a placeholder and will need to be rethought once we have a proper command builder in place.
