@@ -26,6 +26,13 @@ Handles parsing a single String input value into typed data.
 
 ### Individual Review (Command Lead)
 
+Good decisions:
+- Using `Input.parseValue()` directly for `search` was a good choice to get it working. Trying to use optional flags into `parseBasicArgs` would have required modifying the input system which overcomplicated things
+- Using the `ArgumentType` classes for parsing keeps the command methods thin and lets validation logic live in one place.
+
+Less-good decisions:
+- `dispatch` uses a hardcoded 'if' branch to handle `static` vs `dynamic`. It works for now but will need a real subcommand abstraction for later implementation
+- Returning `Map<String, Object>` means callers have no type safety/post-condition. Getting an `int` out requires a cast, which is exactly the problem the library is supposed to solve.
 
 
 ### Team Review
