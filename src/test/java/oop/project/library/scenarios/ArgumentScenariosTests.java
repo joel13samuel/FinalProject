@@ -65,9 +65,9 @@ class ArgumentScenariosTests {
             Arguments.of("Negative Integer", """
                 sub 1.0 -2
                 """, Map.of("left", 1.0, "right", -2.0)),
-            Arguments.of("Negative Decimal (BUG)", """
+            Arguments.of("Negative Decimal (FIXED BUG)", """
                 sub 1.0 -2.0
-                """, null)
+                """, Map.of("left", 1.0, "right", -2.0))
         );
     }
 

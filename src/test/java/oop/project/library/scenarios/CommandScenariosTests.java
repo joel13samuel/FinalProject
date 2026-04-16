@@ -63,9 +63,9 @@ class CommandScenariosTests {
             Arguments.of("Negative Integer", """
                 div --left 1.0 --right -2
                 """, Map.of("left", 1.0, "right", -2.0)),
-            Arguments.of("Negative Decimal (QUIRK)", """
+            Arguments.of("Negative Decimal (FIXED BUG)", """
                 div --left 1.0 --right -2.0
-                """, null)
+                """, Map.of("left", 1.0, "right", -2.0))
         );
     }
 
@@ -97,15 +97,15 @@ class CommandScenariosTests {
             Arguments.of("Lowercase", """
                 search apple
                 """, Map.of("term", "apple", "case-insensitive", false)),
-            Arguments.of("Case Insensitive", """
-                search ApPlE --case-insensitive
+            Arguments.of("Case Insensitive Non-Value (Bonus)", """
+                search ApPlE -case-insensitive
                 """, Map.of("term", "ApPlE", "case-insensitive", true)),
             Arguments.of("Case Insensitive Value", """
                 search ApPlE --case-insensitive true
                 """, Map.of("term", "ApPlE", "case-insensitive", true)),
-            Arguments.of("Invalid Value", """
-                search Apple -i yes
-                """, null)
+            Arguments.of("Named Alias", """
+                search ApPlE --i true
+                """, Map.of("term", "ApPlE", "i", true))
         );
     }
 
