@@ -74,7 +74,7 @@ public final class ArgumentScenarios {
         }
 
         RangedIntegerArgumentType rangedIntegerArgumentType =
-                new RangedIntegerArgumentType(1, Integer.MAX_VALUE);
+                new RangedIntegerArgumentType(1, 100);
 
         String numberString = args.positional().get(0);
 
@@ -82,7 +82,7 @@ public final class ArgumentScenarios {
             int number = rangedIntegerArgumentType.parse(numberString);
             return Map.of("number", number);
         } catch (RuntimeException e) {
-            throw new RuntimeException("fizzbuzz argument must be a positive integer.");
+            throw new RuntimeException("fizzbuzz argument must be a positive integer from 1 to 100.");
         }
     }
 
@@ -95,7 +95,7 @@ public final class ArgumentScenarios {
         }
 
         ChoiceStringArgumentType choiceStringArgumentType =
-                new ChoiceStringArgumentType(List.of("easy", "medium", "hard"));
+                new ChoiceStringArgumentType(List.of("peaceful", "easy", "normal", "hard"));
 
         String difficultyString = args.positional().get(0);
 
@@ -103,7 +103,7 @@ public final class ArgumentScenarios {
             String difficulty = choiceStringArgumentType.parse(difficultyString);
             return Map.of("difficulty", difficulty);
         } catch (RuntimeException e) {
-            throw new RuntimeException("difficulty must be easy, medium, or hard.");
+            throw new RuntimeException("difficulty must be peaceful, easy, normal, or hard.");
         }
     }
 
