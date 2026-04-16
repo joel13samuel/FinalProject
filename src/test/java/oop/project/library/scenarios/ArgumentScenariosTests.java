@@ -1,7 +1,5 @@
 package oop.project.library.scenarios;
 
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import oop.project.library.input.Input;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,31 +19,31 @@ class ArgumentScenariosTests {
 
     private static Stream<Arguments> testAdd() {
         return Stream.of(
-                Arguments.of("Positives", """
+            Arguments.of("Positives", """
                 add 1 2
                 """, Map.of("left", 1, "right", 2)),
-                Arguments.of("Negatives", """
+            Arguments.of("Negatives", """
                 add -1 -2
                 """, Map.of("left", -1, "right", -2)),
-                Arguments.of("Zeros", """
+            Arguments.of("Zeros", """
                 add 0 0
                 """, Map.of("left", 0, "right", 0)),
-                Arguments.of("Non-Numeric Left", """
+            Arguments.of("Non-Numeric Left", """
                 add one 2
                 """, null),
-                Arguments.of("Non-Numeric Right", """
+            Arguments.of("Non-Numeric Right", """
                 add 1 two
                 """, null),
-                Arguments.of("Non-Integer Left", """
+            Arguments.of("Non-Integer Left", """
                 add 1.0 2
                 """, null),
-                Arguments.of("Non-Integer Right", """
+            Arguments.of("Non-Integer Right", """
                 add 1 2.0
                 """, null),
-                Arguments.of("Missing Argument", """
+            Arguments.of("Missing Argument", """
                 add 1
                 """, null),
-                Arguments.of("Extraneous Argument", """
+            Arguments.of("Extraneous Argument", """
                 add 1 2 3
                 """, null)
         );
@@ -59,17 +57,13 @@ class ArgumentScenariosTests {
 
     private static Stream<Arguments> testSub() {
         return Stream.of(
-                Arguments.of("Positives", """
+            Arguments.of("Positives", """
                 sub 1.0 2.0
                 """, Map.of("left", 1.0, "right", 2.0)),
-                Arguments.of("Negative Integer", """
+            Arguments.of("Negative Integer", """
                 sub 1.0 -2
                 """, Map.of("left", 1.0, "right", -2.0)),
-<<<<<<< HEAD
             Arguments.of("Negative Decimal (FIXED BUG)", """
-=======
-                Arguments.of("Negative Decimal (FIXED BUG)", """
->>>>>>> 14133415a7d9d740b9c371513c4cbe301355cc01
                 sub 1.0 -2.0
                 """, Map.of("left", 1.0, "right", -2.0))
         );
@@ -83,10 +77,10 @@ class ArgumentScenariosTests {
 
     private static Stream<Arguments> testFizzbuzz() {
         return Stream.of(
-                Arguments.of("Valid", """
+            Arguments.of("Valid", """
                 fizzbuzz 15
                 """, Map.of("number", 15)),
-                Arguments.of("Zero", """
+            Arguments.of("Zero", """
                 fizzbuzz 0
                 """, null)
         );
@@ -100,10 +94,10 @@ class ArgumentScenariosTests {
 
     private static Stream<Arguments> testDifficulty() {
         return Stream.of(
-                Arguments.of("Easy", """
+            Arguments.of("Easy", """
                 difficulty easy
                 """, Map.of("difficulty", "easy")),
-                Arguments.of("Hardcore", """
+            Arguments.of("Hardcore", """
                 difficulty hardcore
                 """, null)
         );
@@ -117,16 +111,16 @@ class ArgumentScenariosTests {
 
     private static Stream<Arguments> testDate() {
         return Stream.of(
-                Arguments.of("Valid", """
+            Arguments.of("Valid", """
                 date 2024-10-23
                 """, Map.of("date", LocalDate.of(2024, 10, 23))),
-                Arguments.of("Invalid Month", """
+            Arguments.of("Invalid Month", """
                 date 2024-23-10
                 """, null),
-                Arguments.of("Leap Year", """
+            Arguments.of("Leap Year", """
                 date 2024-02-29
                 """, Map.of("date", LocalDate.of(2024, 2, 29))),
-                Arguments.of("Invalid", """
+            Arguments.of("Invalid", """
                 date tuesday
                 """, null)
         );
