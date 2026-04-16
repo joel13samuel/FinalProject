@@ -1,14 +1,14 @@
 package oop.project.library.scenarios;
 
-import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.Arguments;
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import oop.project.library.argument.*;
+import oop.project.library.argument.ChoiceStringArgumentType;
+import oop.project.library.argument.CustomArgumentType;
+import oop.project.library.argument.DoubleArgumentType;
+import oop.project.library.argument.IntegerArgumentType;
+import oop.project.library.argument.RangedIntegerArgumentType;
 import oop.project.library.input.BasicArgs;
 import oop.project.library.input.Input;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -47,17 +47,9 @@ public final class ArgumentScenarios {
 
         DoubleArgumentType doubleArgumentType = new DoubleArgumentType();
 
-        String leftString = args.positional().get(0);
-        String rightString = args.positional().get(1);
-
-        if ((leftString.startsWith("-") && leftString.contains(".")) ||
-                (rightString.startsWith("-") && rightString.contains("."))) {
-            throw new RuntimeException("Negative decimal values are not supported.");
-        }
-
         try {
-            double left = doubleArgumentType.parse(leftString);
-            double right = doubleArgumentType.parse(rightString);
+            double left = doubleArgumentType.parse(args.positional().get(0));
+            double right = doubleArgumentType.parse(args.positional().get(1));
 
             return Map.of("left", left, "right", right);
         } catch (RuntimeException e) {

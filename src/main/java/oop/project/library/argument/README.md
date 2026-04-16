@@ -23,6 +23,7 @@ Handles parsing a single String input value into typed data.
 - Another good decision was adding `CustomArgumentType<T>`. That gave us a simple way to support custom parsing like `LocalDate` without hardcoding every possible type into the system.
 - One weaker part of the design is how validation works right now. Having separate classes like `RangedIntegerArgumentType` and `ChoiceStringArgumentType` made things easier to implement, but it is not the most flexible design long-term.
 - Another weaker part is that some validation and exception translation still happens in the scenario layer. It works, but ideally more of that behavior would live fully inside the Argument system.
+- The negative decimal update helped make one design point clearer to me. Values like `-2.0` should be handled by the shared parsing logic not by special case checks in a scenario. I think that fits better with the goal of keeping the Argument system responsible for value parsing.
 
 ### Individual Review (Command Lead)
 
