@@ -1,107 +1,133 @@
-package oop.project.library.scenarios;
+package oop.project.library.command;
 
-import oop.project.library.argument.BooleanArgumentType;
-import oop.project.library.argument.DoubleArgumentType;
-import oop.project.library.argument.IntegerArgumentType;
-import oop.project.library.input.BasicArgs;
+import oop.project.library.argument.ArgumentType;
 import oop.project.library.input.Input;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-public final class CommandScenarios {
+public final class Command {
 
-    public static Map<String, Object> mul(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (args.positional().size() != 2 || !args.named().isEmpty())
-            throw new RuntimeException("mul expects exactly 2 positional arguments.");
-        IntegerArgumentType type = new IntegerArgumentType();
-        try {
-            int left = type.parse(args.positional().get(0));
-            int right = type.parse(args.positional().get(1));
-            return Map.of("left", left, "right", right);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("mul arguments must be integers.");
-        }
+    private final List<String> positionalNames = new ArrayList<>();
+    private final List<ArgumentType<?>> positionalTypes = new ArrayList<>();
+    private final Map<String, ArgumentType<?>> namedTypes = new LinkedHashMap<>();
+    private final Map<String, Object> namedDefaults = new LinkedHashMap<>();
+    private final Map<String, String> namedAliases = new LinkedHashMap<>(); // alias -> canonical name
+
+    public <T> Command addPositional(String name, ArgumentType<T> type) {
+        positionalNames.add(name);
+        positionalTypes.add(type);
+        return this;
     }
 
-    public static Map<String, Object> div(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (!args.named().containsKey("left") || !args.named().containsKey("right"))
-            throw new RuntimeException("div requires --left and --right.");
-        String leftStr = args.named().get("left");
-        String rightStr = args.named().get("right");
-        if ((leftStr.startsWith("-") && leftStr.contains(".")) ||
-                (rightStr.startsWith("-") && rightStr.contains(".")))
-            throw new RuntimeException("Negative decimal values are not supported.");
-        DoubleArgumentType type = new DoubleArgumentType();
-        try {
-            double left = type.parse(leftStr);
-            double right = type.parse(rightStr);
-            return Map.of("left", left, "right", right);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("div arguments must be doubles.");
-        }
+    public <T> Command addPositional(String name, ArgumentType<T> type, T defaultValue) {
+        positionalNames.add(name);
+        positionalTypes.add(type);
+        namedDefaults.put("__positional__" + name, defaultValue);
+        return this;
     }
 
-    public static Map<String, Object> echo(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        String message = args.positional().isEmpty() ? "echo,echo,echo..." : args.positional().get(0);
-        return Map.of("message", message);
+    public <T> Command addNamed(String name, ArgumentType<T> type) {
+        namedTypes.put(name, type);
+        return this;
     }
 
-    public static Map<String, Object> search(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        // parse term (first positional)
-        String term = switch (input.parseValue().orElse(null)) {
-            case Input.Value.Literal(String v) -> v;
-            case Input.Value.QuotedString(String v) -> v;
-            case null, default -> throw new RuntimeException("search requires a term.");
-        };
-        // parse optional --case-insensitive / -i flag
-        boolean caseInsensitive = false;
-        Input.Value flagToken = input.parseValue().orElse(null);
-        if (flagToken != null) {
-            String flagName = switch (flagToken) {
-                case Input.Value.DoubleFlag(String n) -> n;
-                case Input.Value.SingleFlag(String n) -> n;
-                default -> throw new RuntimeException("Unexpected token after term.");
-            };
-            if (!flagName.equals("case-insensitive") && !flagName.equals("i"))
-                throw new RuntimeException("Unknown flag: " + flagName);
-            // peek at next token for optional value
-            Input.Value nextToken = input.parseValue().orElse(null);
-            if (nextToken == null) {
-                caseInsensitive = true; // flag present, no value
-            } else if (nextToken instanceof Input.Value.Literal(String raw)) {
-                try {
-                    caseInsensitive = new BooleanArgumentType().parse(raw);
-                } catch (RuntimeException e) {
-                    throw new RuntimeException("case-insensitive must be true or false.");
+    public <T> Command addNamed(String name, ArgumentType<T> type, T defaultValue) {
+        namedTypes.put(name, type);
+        namedDefaults.put(name, defaultValue);
+        return this;
+    }
+
+    public Command addAlias(String alias, String canonicalName) {
+        namedAliases.put(alias, canonicalName);
+        return this;
+    }
+
+    public ParsedCommand parse(String arguments) {
+        var input = new Input(arguments);
+        var result = new LinkedHashMap<String, Object>();
+
+        // collect all tokens first
+        var positionals = new ArrayList<String>();
+        var named = new LinkedHashMap<String, String>();
+
+        Input.Value token;
+        while ((token = input.parseValue().orElse(null)) != null) {
+            switch (token) {
+                case Input.Value.Literal(String v) -> positionals.add(v);
+                case Input.Value.QuotedString(String v) -> positionals.add(v);
+                case Input.Value.SingleFlag(String name) -> {
+                    String canonical = namedAliases.getOrDefault(name, name);
+                    // peek for optional value
+                    Input.Value next = input.parseValue().orElse(null);
+                    if (next instanceof Input.Value.Literal(String v)) {
+                        named.put(canonical, v);
+                    } else if (next == null) {
+                        named.put(canonical, "");
+                    } else {
+                        throw new RuntimeException("Unexpected token after -" + name + ".");
+                    }
                 }
-            } else {
-                throw new RuntimeException("case-insensitive must be true or false.");
+                case Input.Value.DoubleFlag(String name) -> {
+                    String canonical = namedAliases.getOrDefault(name, name);
+                    // peek for optional value
+                    Input.Value next = input.parseValue().orElse(null);
+                    if (next instanceof Input.Value.Literal(String v)) {
+                        named.put(canonical, v);
+                    } else if (next == null) {
+                        named.put(canonical, "");
+                    } else {
+                        throw new RuntimeException("Unexpected token after --" + name + ".");
+                    }
+                }
             }
         }
-        return Map.of("term", term, "case-insensitive", caseInsensitive);
-    }
 
-    public static Map<String, Object> dispatch(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (args.positional().size() != 2)
-            throw new RuntimeException("dispatch expects exactly 2 positional arguments.");
-        String type = args.positional().get(0);
-        String rawValue = args.positional().get(1);
-        if (!type.equals("static") && !type.equals("dynamic"))
-            throw new RuntimeException("dispatch type must be static or dynamic.");
-        if (type.equals("static")) {
-            try {
-                int value = new IntegerArgumentType().parse(rawValue);
-                return Map.of("type", type, "value", value);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("dispatch static value must be an integer.");
+        // validate and parse positionals
+        if (positionals.size() > positionalNames.size()) {
+            throw new RuntimeException(
+                    "Expected " + positionalNames.size() + " positional argument(s), got " + positionals.size() + "."
+            );
+        }
+        for (int i = 0; i < positionalNames.size(); i++) {
+            String name = positionalNames.get(i);
+            String defaultKey = "__positional__" + name;
+            if (i < positionals.size()) {
+                result.put(name, positionalTypes.get(i).parse(positionals.get(i)));
+            } else if (namedDefaults.containsKey(defaultKey)) {
+                result.put(name, namedDefaults.get(defaultKey));
+            } else {
+                throw new RuntimeException(
+                        "Expected " + positionalNames.size() + " positional argument(s), got " + positionals.size() + "."
+                );
             }
         }
-        return Map.of("type", type, "value", rawValue);
+
+        // validate and parse named
+        for (var entry : namedTypes.entrySet()) {
+            String name = entry.getKey();
+            if (named.containsKey(name)) {
+                String raw = named.get(name);
+                // flag present with no value: use true if default is boolean false, else error
+                if (raw.isEmpty()) {
+                    if (namedDefaults.get(name) instanceof Boolean) {
+                        result.put(name, true);
+                    } else {
+                        throw new RuntimeException("Missing value for --" + name + ".");
+                    }
+                } else {
+                    result.put(name, entry.getValue().parse(raw));
+                }
+            } else if (namedDefaults.containsKey(name)) {
+                result.put(name, namedDefaults.get(name));
+            } else {
+                throw new RuntimeException("Missing required named argument: --" + name + ".");
+            }
+        }
+
+        return new ParsedCommand(result);
     }
 
 }
