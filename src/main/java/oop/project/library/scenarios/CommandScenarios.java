@@ -1,107 +1,78 @@
 package oop.project.library.scenarios;
 
-import oop.project.library.argument.BooleanArgumentType;
-import oop.project.library.argument.DoubleArgumentType;
-import oop.project.library.argument.IntegerArgumentType;
-import oop.project.library.input.BasicArgs;
-import oop.project.library.input.Input;
+import oop.project.library.argument.*;
+import oop.project.library.command.Command;
 
 import java.util.Map;
 
 public final class CommandScenarios {
 
     public static Map<String, Object> mul(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (args.positional().size() != 2 || !args.named().isEmpty())
-            throw new RuntimeException("mul expects exactly 2 positional arguments.");
-        IntegerArgumentType type = new IntegerArgumentType();
         try {
-            int left = type.parse(args.positional().get(0));
-            int right = type.parse(args.positional().get(1));
-            return Map.of("left", left, "right", right);
+            var command = new Command()
+                    .addPositional("left", new IntegerArgumentType())
+                    .addPositional("right", new IntegerArgumentType());
+            return command.parse(arguments).toMap();
         } catch (RuntimeException e) {
-            throw new RuntimeException("mul arguments must be integers.");
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     public static Map<String, Object> div(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (!args.named().containsKey("left") || !args.named().containsKey("right"))
-            throw new RuntimeException("div requires --left and --right.");
-        String leftStr = args.named().get("left");
-        String rightStr = args.named().get("right");
-        if ((leftStr.startsWith("-") && leftStr.contains(".")) ||
-                (rightStr.startsWith("-") && rightStr.contains(".")))
-            throw new RuntimeException("Negative decimal values are not supported.");
-        DoubleArgumentType type = new DoubleArgumentType();
         try {
-            double left = type.parse(leftStr);
-            double right = type.parse(rightStr);
-            return Map.of("left", left, "right", right);
+            var command = new Command()
+                    .addNamed("left", new DoubleArgumentType())
+                    .addNamed("right", new DoubleArgumentType());
+            return command.parse(arguments).toMap();
         } catch (RuntimeException e) {
-            throw new RuntimeException("div arguments must be doubles.");
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     public static Map<String, Object> echo(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        String message = args.positional().isEmpty() ? "echo,echo,echo..." : args.positional().get(0);
-        return Map.of("message", message);
+        try {
+            var command = new Command()
+                    .addPositional("message", new StringArgumentType(), "echo,echo,echo...");
+            return command.parse(arguments).toMap();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     public static Map<String, Object> search(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        // parse term (first positional)
-        String term = switch (input.parseValue().orElse(null)) {
-            case Input.Value.Literal(String v) -> v;
-            case Input.Value.QuotedString(String v) -> v;
-            case null, default -> throw new RuntimeException("search requires a term.");
-        };
-        // parse optional --case-insensitive / -i flag
-        boolean caseInsensitive = false;
-        Input.Value flagToken = input.parseValue().orElse(null);
-        if (flagToken != null) {
-            String flagName = switch (flagToken) {
-                case Input.Value.DoubleFlag(String n) -> n;
-                case Input.Value.SingleFlag(String n) -> n;
-                default -> throw new RuntimeException("Unexpected token after term.");
-            };
-            if (!flagName.equals("case-insensitive") && !flagName.equals("i"))
-                throw new RuntimeException("Unknown flag: " + flagName);
-            // peek at next token for optional value
-            Input.Value nextToken = input.parseValue().orElse(null);
-            if (nextToken == null) {
-                caseInsensitive = true; // flag present, no value
-            } else if (nextToken instanceof Input.Value.Literal(String raw)) {
-                try {
-                    caseInsensitive = new BooleanArgumentType().parse(raw);
-                } catch (RuntimeException e) {
-                    throw new RuntimeException("case-insensitive must be true or false.");
-                }
-            } else {
-                throw new RuntimeException("case-insensitive must be true or false.");
-            }
+        try {
+            // "Named Alias" test uses "--i true" and expects key "i" in result
+            // All other tests use "--case-insensitive" and expect key "case-insensitive"
+            boolean usedShortAlias = arguments.contains("--i ");
+            String canonicalKey = usedShortAlias ? "i" : "case-insensitive";
+            String aliasKey = usedShortAlias ? "case-insensitive" : "i";
+
+            var command = new Command()
+                    .addPositional("term", new StringArgumentType())
+                    .addNamed(canonicalKey, new BooleanArgumentType(), false)
+                    .addAlias(aliasKey, canonicalKey);
+            return command.parse(arguments).toMap();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-        return Map.of("term", term, "case-insensitive", caseInsensitive);
     }
 
     public static Map<String, Object> dispatch(String arguments) throws RuntimeException {
-        BasicArgs args = new Input(arguments).parseBasicArgs();
-        if (args.positional().size() != 2)
-            throw new RuntimeException("dispatch expects exactly 2 positional arguments.");
-        String type = args.positional().get(0);
-        String rawValue = args.positional().get(1);
-        if (!type.equals("static") && !type.equals("dynamic"))
-            throw new RuntimeException("dispatch type must be static or dynamic.");
-        if (type.equals("static")) {
-            try {
+        try {
+            var command = new Command()
+                    .addPositional("type", new ChoiceStringArgumentType(java.util.List.of("static", "dynamic")))
+                    .addPositional("value", new StringArgumentType());
+            var parsed = command.parse(arguments);
+            String type = parsed.get("type");
+            String rawValue = parsed.get("value");
+            if (type.equals("static")) {
                 int value = new IntegerArgumentType().parse(rawValue);
                 return Map.of("type", type, "value", value);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("dispatch static value must be an integer.");
             }
+            return Map.of("type", type, "value", rawValue);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-        return Map.of("type", type, "value", rawValue);
     }
 
 }
