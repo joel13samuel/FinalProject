@@ -4,21 +4,18 @@ import java.util.List;
 
 public class ChoiceStringArgumentType implements ArgumentType<String> {
 
-    private final StringArgumentType stringArgumentType;
-    private final List<String> choices;
+    private final ValidatedArgumentType<String> validatedArgumentType;
 
     public ChoiceStringArgumentType(List<String> choices) {
-        this.stringArgumentType = new StringArgumentType();
-        this.choices = choices;
+        var allowedChoices = List.copyOf(choices);
+        this.validatedArgumentType = new ValidatedArgumentType<>(
+                new StringArgumentType(),
+                allowedChoices::contains,
+                "Value must be one of: " + allowedChoices + "."
+        );
     }
 
     public String parse(String value) throws RuntimeException {
-        String parsedValue = stringArgumentType.parse(value);
-
-        if (!choices.contains(parsedValue)) {
-            throw new RuntimeException("Value must be one of: " + choices);
-        }
-
-        return parsedValue;
+        return validatedArgumentType.parse(value);
     }
 }
