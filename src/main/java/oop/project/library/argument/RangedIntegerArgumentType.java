@@ -12,7 +12,7 @@ public class RangedIntegerArgumentType implements ArgumentType<Integer> {
         );
     }
 
-    public Integer parse(String value) throws RuntimeException {
+    public Integer parse(String value) throws ArgumentParseException {
         return validatedArgumentType.parse(value);
     }
 }
