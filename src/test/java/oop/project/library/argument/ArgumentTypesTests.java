@@ -22,14 +22,14 @@ class ArgumentTypesTests {
         var type = new EnumArgumentType<>(Difficulty.class, true);
 
         Assertions.assertEquals(Difficulty.HARD, type.parse("HARD"));
-        Assertions.assertThrows(RuntimeException.class, () -> type.parse("hard"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("hard"));
     }
 
     @Test
     void enumArgumentTypeRejectsInvalidValues() {
         var type = new EnumArgumentType<>(Difficulty.class);
 
-        Assertions.assertThrows(RuntimeException.class, () -> type.parse("impossible"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("impossible"));
     }
 
     @Test
@@ -43,7 +43,7 @@ class ArgumentTypesTests {
     void regexStringArgumentTypeRejectsNonMatchingValues() {
         var type = new RegexStringArgumentType("[A-Z]+-[IV]+");
 
-        Assertions.assertThrows(RuntimeException.class, () -> type.parse("fire-4"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("fire-4"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class ArgumentTypesTests {
                 "Value must be even."
         );
 
-        var exception = Assertions.assertThrows(RuntimeException.class, () -> type.parse("7"));
+        var exception = Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("7"));
         Assertions.assertEquals("Value must be even.", exception.getMessage());
     }
 
@@ -74,7 +74,7 @@ class ArgumentTypesTests {
         var type = new ChoiceStringArgumentType(java.util.List.of("peaceful", "easy", "normal", "hard"));
 
         Assertions.assertEquals("easy", type.parse("easy"));
-        Assertions.assertThrows(RuntimeException.class, () -> type.parse("impossible"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("impossible"));
     }
 
     @Test
@@ -84,7 +84,7 @@ class ArgumentTypesTests {
 
         Assertions.assertEquals(5, integerType.parse("5"));
         Assertions.assertEquals(2.0, doubleType.parse("2.0"));
-        Assertions.assertThrows(RuntimeException.class, () -> integerType.parse("11"));
-        Assertions.assertThrows(RuntimeException.class, () -> doubleType.parse("3.0"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> integerType.parse("11"));
+        Assertions.assertThrows(ArgumentParseException.class, () -> doubleType.parse("3.0"));
     }
 }
