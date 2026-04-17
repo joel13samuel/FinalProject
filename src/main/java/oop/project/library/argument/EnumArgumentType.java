@@ -16,14 +16,14 @@ public class EnumArgumentType<E extends Enum<E>> implements ArgumentType<E> {
         this.caseSensitive = caseSensitive;
     }
 
-    public E parse(String value) throws RuntimeException {
+    public E parse(String value) throws ArgumentParseException {
         for (E constant : enumType.getEnumConstants()) {
             if (matches(constant.name(), value)) {
                 return constant;
             }
         }
 
-        throw new RuntimeException("Value must be one of: " + Arrays.toString(enumType.getEnumConstants()) + ".");
+        throw new ArgumentParseException("Value must be one of: " + Arrays.toString(enumType.getEnumConstants()) + ".");
     }
 
     private boolean matches(String enumName, String value) {
