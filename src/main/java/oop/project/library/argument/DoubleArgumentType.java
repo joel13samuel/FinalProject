@@ -2,11 +2,11 @@ package oop.project.library.argument;
 
 public class DoubleArgumentType implements ArgumentType<Double> {
 
-    public Double parse(String value) throws RuntimeException {
+    public Double parse(String value) throws ArgumentParseException {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("Value must be a double.");
+            throw new ArgumentParseException("Value must be a double.", e);
         }
     }
 }
