@@ -1,18 +1,22 @@
 package oop.project.library.scenarios;
 
-import oop.project.library.argument.ChoiceStringArgumentType;
 import oop.project.library.argument.CustomArgumentType;
 import oop.project.library.argument.DoubleArgumentType;
+import oop.project.library.argument.EnumArgumentType;
 import oop.project.library.argument.IntegerArgumentType;
 import oop.project.library.argument.RangedIntegerArgumentType;
 import oop.project.library.input.BasicArgs;
 import oop.project.library.input.Input;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class ArgumentScenarios {
+
+    private enum Difficulty {
+        PEACEFUL, EASY, NORMAL, HARD
+    }
 
     public static Map<String, Object> add(String arguments) throws RuntimeException {
         Input input = new Input(arguments);
@@ -86,14 +90,13 @@ public final class ArgumentScenarios {
             throw new RuntimeException("difficulty only takes exactly 1 positional argument.");
         }
 
-        ChoiceStringArgumentType choiceStringArgumentType =
-                new ChoiceStringArgumentType(List.of("peaceful", "easy", "normal", "hard"));
+        EnumArgumentType<Difficulty> difficultyArgumentType = new EnumArgumentType<>(Difficulty.class);
 
         String difficultyString = args.positional().get(0);
 
         try {
-            String difficulty = choiceStringArgumentType.parse(difficultyString);
-            return Map.of("difficulty", difficulty);
+            Difficulty difficulty = difficultyArgumentType.parse(difficultyString);
+            return Map.of("difficulty", difficulty.name().toLowerCase(Locale.ROOT));
         } catch (RuntimeException e) {
             throw new RuntimeException("difficulty must be peaceful, easy, normal, or hard.");
         }
