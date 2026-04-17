@@ -4,25 +4,21 @@ import java.util.regex.Pattern;
 
 public class RegexStringArgumentType implements ArgumentType<String> {
 
-    private final StringArgumentType stringArgumentType;
-    private final Pattern pattern;
+    private final ValidatedArgumentType<String> validatedArgumentType;
 
     public RegexStringArgumentType(String regex) {
         this(Pattern.compile(regex));
     }
 
     public RegexStringArgumentType(Pattern pattern) {
-        this.stringArgumentType = new StringArgumentType();
-        this.pattern = pattern;
+        this.validatedArgumentType = new ValidatedArgumentType<>(
+                new StringArgumentType(),
+                value -> pattern.matcher(value).matches(),
+                "Value must match regex: " + pattern.pattern() + "."
+        );
     }
 
     public String parse(String value) throws RuntimeException {
-        String parsedValue = stringArgumentType.parse(value);
-
-        if (!pattern.matcher(parsedValue).matches()) {
-            throw new RuntimeException("Value must match regex: " + pattern.pattern() + ".");
-        }
-
-        return parsedValue;
+        return validatedArgumentType.parse(value);
     }
 }
