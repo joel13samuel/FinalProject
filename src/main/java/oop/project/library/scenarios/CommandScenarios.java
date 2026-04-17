@@ -54,17 +54,25 @@ public final class CommandScenarios {
 
     public static Map<String, Object> dispatch(String arguments) throws RuntimeException {
         try {
-            var command = new Command()
+            String type = new Command()
                     .addPositional("type", new ChoiceStringArgumentType(java.util.List.of("static", "dynamic")))
-                    .addPositional("value", new StringArgumentType());
-            var parsed = command.parse(arguments);
-            String type = parsed.get("type");
-            String rawValue = parsed.get("value");
+                    .addPositional("value", new StringArgumentType())
+                    .parse(arguments)
+                    .get("type");
+
             if (type.equals("static")) {
-                int value = new IntegerArgumentType().parse(rawValue);
-                return Map.of("type", type, "value", value);
+                return new Command()
+                        .addPositional("type", new ChoiceStringArgumentType(java.util.List.of("static", "dynamic")))
+                        .addPositional("value", new IntegerArgumentType())
+                        .parse(arguments)
+                        .toMap();
+            } else {
+                return new Command()
+                        .addPositional("type", new ChoiceStringArgumentType(java.util.List.of("static", "dynamic")))
+                        .addPositional("value", new StringArgumentType())
+                        .parse(arguments)
+                        .toMap();
             }
-            return Map.of("type", type, "value", rawValue);
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
