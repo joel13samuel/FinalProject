@@ -15,7 +15,7 @@ public class ChoiceStringArgumentType implements ArgumentType<String> {
         );
     }
 
-    public String parse(String value) throws RuntimeException {
+    public String parse(String value) throws ArgumentParseException {
         return validatedArgumentType.parse(value);
     }
 }
