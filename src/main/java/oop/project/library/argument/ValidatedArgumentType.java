@@ -14,11 +14,11 @@ public class ValidatedArgumentType<T> implements ArgumentType<T> {
         this.errorMessage = errorMessage;
     }
 
-    public T parse(String value) throws RuntimeException {
+    public T parse(String value) throws ArgumentParseException {
         T parsedValue = baseType.parse(value);
 
         if (!validator.test(parsedValue)) {
-            throw new RuntimeException(errorMessage);
+            throw new ArgumentParseException(errorMessage);
         }
 
         return parsedValue;
