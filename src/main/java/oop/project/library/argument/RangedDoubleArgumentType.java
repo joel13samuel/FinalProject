@@ -12,7 +12,7 @@ public class RangedDoubleArgumentType implements ArgumentType<Double> {
         );
     }
 
-    public Double parse(String value) throws RuntimeException {
+    public Double parse(String value) throws ArgumentParseException {
         return validatedArgumentType.parse(value);
     }
 }
