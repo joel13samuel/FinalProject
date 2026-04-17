@@ -41,16 +41,11 @@ public final class CommandScenarios {
 
     public static Map<String, Object> search(String arguments) throws RuntimeException {
         try {
-            // "Named Alias" test uses "--i true" and expects key "i" in result
-            // All other tests use "--case-insensitive" and expect key "case-insensitive"
-            boolean usedShortAlias = arguments.contains("--i ");
-            String canonicalKey = usedShortAlias ? "i" : "case-insensitive";
-            String aliasKey = usedShortAlias ? "case-insensitive" : "i";
-
+            // canonical key is always "case-insensitive"; "i" and "-case-insensitive" are aliases
             var command = new Command()
                     .addPositional("term", new StringArgumentType())
-                    .addNamed(canonicalKey, new BooleanArgumentType(), false)
-                    .addAlias(aliasKey, canonicalKey);
+                    .addNamed("case-insensitive", new BooleanArgumentType(), false)
+                    .addAlias("i", "case-insensitive");
             return command.parse(arguments).toMap();
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
