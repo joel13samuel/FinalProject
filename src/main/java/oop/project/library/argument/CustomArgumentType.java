@@ -10,11 +10,13 @@ public class CustomArgumentType<T> implements ArgumentType<T> {
         this.parser = parser;
     }
 
-    public T parse(String value) throws RuntimeException {
+    public T parse(String value) throws ArgumentParseException {
         try {
             return parser.apply(value);
+        } catch (ArgumentParseException e) {
+            throw e;
         } catch (RuntimeException e) {
-            throw new RuntimeException("Value is invalid.");
+            throw new ArgumentParseException("Value is invalid.", e);
         }
     }
 }
