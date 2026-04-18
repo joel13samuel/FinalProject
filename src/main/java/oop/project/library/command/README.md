@@ -44,21 +44,21 @@ One weakness I still see is that default values are declared inline per scenario
 
 **Good decisions (Argument System):**
 
-- Using `ArgumentType<T>` as the base abstraction gave every parser the same shape. The Command system only depends on that interface, so adding new types does not require changing anything on the Command side.
-- Adding `ValidatedArgumentType<T>` made the validation design more reusable. Range checks, regex checks, and choice checks do not all need their own separate logic anymore, which made the system easier to extend in Part 2.
+- One design decision I still think worked well on the Argument side was building everything around `ArgumentType<T>`. That gave all of the parsers the same general shape, and it also meant the Command side could rely on one interface instead of needing special handling for every type.
+- Another good design decision was adding `ValidatedArgumentType<T>`. That made the validation side feel a lot more reusable, because things like ranges, regex checks, and choice checks do not all need completely separate parsing logic anymore.
 
 **Bad decisions (Argument System):**
 
-- `BooleanArgumentType` only accepts `"true"` or `"false"` as strings. That works for typed named arguments, but it cannot handle no-value flags like `-case-insensitive`. The Command system ended up handling that case manually, which meant the argument type was not doing the full job.
-- Some exception translation still happens outside the Argument system, in the scenario layer. The Argument side is cleaner now, but the full project is still not fully consistent about where errors are caught and how they are presented.
+- One weaker design decision is that the Argument system still has a mix of older specialized validation classes and the newer wrapper-based approach. It works, but the design feels a little in-between right now instead of being fully unified.
+- Another weaker design decision is that some exception translation still happens outside the Argument system, especially in the scenario layer. The Argument side is cleaner now, but it still is not fully in control of how its errors are presented in the final scenarios.
 
 **Good decision (Command System):**
 
-- The two-pass approach in `dispatch` keeps all parsing inside the `Command` system. The scenario never calls `ArgumentType.parse()` directly, which keeps the separation between the two systems clear even for a case like subcommands where the argument types depend on a previous argument's value.
+- One good design decision in the Command system is separating the command definition from the parsed result with `Command` and `ParsedCommand`. I think that keeps the structure of a command and the values produced by parsing from getting mixed together, which feels like a cleaner direction as the project gets more complicated.
 
 **Bad decision (Command System):**
 
-- `ParsedCommand.toMap()` returns a raw `Map<String, Object>`. If you call `get` with the wrong type you get a `ClassCastException` at runtime with no helpful context. For a library whose purpose is safer argument parsing, that is a real gap in the design.
+- One weaker design decision in the Command system is that typed extraction is still not as strong as it probably should be. `ParsedCommand` still relies on unchecked casts and can also return a raw `Map<String, Object>`, so the library is not giving as much type safety or error clarity as it probably should.
 
 ---
 
