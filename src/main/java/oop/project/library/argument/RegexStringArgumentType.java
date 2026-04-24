@@ -13,11 +13,11 @@ public class RegexStringArgumentType implements ArgumentType<String> {
     public RegexStringArgumentType(Pattern pattern) {
         this.validatedArgumentType = new ValidatedArgumentType<>(
                 new StringArgumentType(),
-                value -> pattern.matcher(value).matches(),
-                "Value must match regex: " + pattern.pattern() + "."
+                new RegexValidationRule(pattern)
         );
     }
 
+    @Override
     public String parse(String value) throws ArgumentParseException {
         return validatedArgumentType.parse(value);
     }

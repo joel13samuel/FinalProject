@@ -7,14 +7,13 @@ public class ChoiceStringArgumentType implements ArgumentType<String> {
     private final ValidatedArgumentType<String> validatedArgumentType;
 
     public ChoiceStringArgumentType(List<String> choices) {
-        var allowedChoices = List.copyOf(choices);
         this.validatedArgumentType = new ValidatedArgumentType<>(
                 new StringArgumentType(),
-                allowedChoices::contains,
-                "Value must be one of: " + allowedChoices + "."
+                new ChoiceValidationRule<>(choices)
         );
     }
 
+    @Override
     public String parse(String value) throws ArgumentParseException {
         return validatedArgumentType.parse(value);
     }

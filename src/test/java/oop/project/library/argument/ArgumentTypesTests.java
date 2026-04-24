@@ -70,6 +70,22 @@ class ArgumentTypesTests {
     }
 
     @Test
+    void validatedArgumentTypeCanApplyMultipleRules() {
+        var type = new ValidatedArgumentType<>(
+                new IntegerArgumentType(),
+                java.util.List.of(
+                        ValidationRule.from(value -> value > 0, "Value must be positive."),
+                        ValidationRule.from(value -> value % 2 == 0, "Value must be even.")
+                )
+        );
+
+        Assertions.assertEquals(8, type.parse("8"));
+
+        var exception = Assertions.assertThrows(ArgumentParseException.class, () -> type.parse("3"));
+        Assertions.assertEquals("Value must be even.", exception.getMessage());
+    }
+
+    @Test
     void choiceStringArgumentTypeStillRejectsUnknownChoices() {
         var type = new ChoiceStringArgumentType(java.util.List.of("peaceful", "easy", "normal", "hard"));
 
@@ -78,13 +94,29 @@ class ArgumentTypesTests {
     }
 
     @Test
-    void rangedArgumentTypesStillEnforceBounds() {
-        var integerType = new RangedIntegerArgumentType(1, 10);
-        var doubleType = new RangedDoubleArgumentType(1.5, 2.5);
+    void rangedArgumentTypeAbstractsNumericRangesAcrossBaseTypes() {
+        var integerType = new RangedArgumentType<>(new IntegerArgumentType(), 1, 10);
+        var doubleType = new RangedArgumentType<>(new DoubleArgumentType(), 1.5, 2.5);
 
         Assertions.assertEquals(5, integerType.parse("5"));
         Assertions.assertEquals(2.0, doubleType.parse("2.0"));
         Assertions.assertThrows(ArgumentParseException.class, () -> integerType.parse("11"));
         Assertions.assertThrows(ArgumentParseException.class, () -> doubleType.parse("3.0"));
+    }
+
+    @Test
+    void rangedNumericConvenienceTypesDelegateToSharedRangeAbstraction() {
+        Assertions.assertEquals(5, new RangedIntegerArgumentType(1, 10).parse("5"));
+        Assertions.assertEquals(2.0, new RangedDoubleArgumentType(1.5, 2.5).parse("2.0"));
+    }
+
+    @Test
+    void rangeValidationRejectsInvalidBounds() {
+        var exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new RangedArgumentType<>(new IntegerArgumentType(), 10, 1)
+        );
+
+        Assertions.assertEquals("Minimum must not exceed maximum.", exception.getMessage());
     }
 }

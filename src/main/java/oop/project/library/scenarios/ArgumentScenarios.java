@@ -4,9 +4,8 @@ import oop.project.library.argument.CustomArgumentType;
 import oop.project.library.argument.DoubleArgumentType;
 import oop.project.library.argument.EnumArgumentType;
 import oop.project.library.argument.IntegerArgumentType;
-import oop.project.library.argument.RangedIntegerArgumentType;
-import oop.project.library.input.BasicArgs;
-import oop.project.library.input.Input;
+import oop.project.library.argument.RangedArgumentType;
+import oop.project.library.command.Command;
 
 import java.time.LocalDate;
 import java.util.Locale;
@@ -19,106 +18,71 @@ public final class ArgumentScenarios {
     }
 
     public static Map<String, Object> add(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        BasicArgs args = input.parseBasicArgs();
-
-        if (args.positional().size() != 2 || !args.named().isEmpty()) {
-            throw new RuntimeException("add expects exactly 2 positional arguments.");
-        }
-
-        IntegerArgumentType integerArgumentType = new IntegerArgumentType();
-
         try {
-            String leftString = args.positional().get(0);
-            String rightString = args.positional().get(1);
+            var parsed = new Command()
+                    .addPositional("left", new IntegerArgumentType())
+                    .addPositional("right", new IntegerArgumentType())
+                    .parse(arguments);
 
-            int left = integerArgumentType.parse(leftString);
-            int right = integerArgumentType.parse(rightString);
-
+            int left = parsed.get("left", Integer.class);
+            int right = parsed.get("right", Integer.class);
             return Map.of("left", left, "right", right);
         } catch (RuntimeException e) {
-            throw new RuntimeException("add arguments must be integers.");
+            throw new RuntimeException("add arguments must be integers.", e);
         }
     }
 
     public static Map<String, Object> sub(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        BasicArgs args = input.parseBasicArgs();
-
-        if (args.positional().size() != 2 || !args.named().isEmpty()) {
-            throw new RuntimeException("sub expects exactly 2 positional arguments.");
-        }
-
-        DoubleArgumentType doubleArgumentType = new DoubleArgumentType();
-
         try {
-            double left = doubleArgumentType.parse(args.positional().get(0));
-            double right = doubleArgumentType.parse(args.positional().get(1));
+            var parsed = new Command()
+                    .addPositional("left", new DoubleArgumentType())
+                    .addPositional("right", new DoubleArgumentType())
+                    .parse(arguments);
 
+            double left = parsed.get("left", Double.class);
+            double right = parsed.get("right", Double.class);
             return Map.of("left", left, "right", right);
         } catch (RuntimeException e) {
-            throw new RuntimeException("sub arguments must be doubles.");
+            throw new RuntimeException("sub arguments must be doubles.", e);
         }
     }
 
     public static Map<String, Object> fizzbuzz(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        BasicArgs args = input.parseBasicArgs();
-
-        if (args.positional().size() != 1 || !args.named().isEmpty()) {
-            throw new RuntimeException("fizzbuzz only takes exactly 1 positional argument.");
-        }
-
-        RangedIntegerArgumentType rangedIntegerArgumentType =
-                new RangedIntegerArgumentType(1, 100);
-
-        String numberString = args.positional().get(0);
-
         try {
-            int number = rangedIntegerArgumentType.parse(numberString);
+            var parsed = new Command()
+                    .addPositional("number", new RangedArgumentType<>(new IntegerArgumentType(), 1, 100))
+                    .parse(arguments);
+
+            int number = parsed.get("number", Integer.class);
             return Map.of("number", number);
         } catch (RuntimeException e) {
-            throw new RuntimeException("fizzbuzz argument must be a positive integer from 1 to 100.");
+            throw new RuntimeException("fizzbuzz argument must be a positive integer from 1 to 100.", e);
         }
     }
 
     public static Map<String, Object> difficulty(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        BasicArgs args = input.parseBasicArgs();
-
-        if (args.positional().size() != 1 || !args.named().isEmpty()) {
-            throw new RuntimeException("difficulty only takes exactly 1 positional argument.");
-        }
-
-        EnumArgumentType<Difficulty> difficultyArgumentType = new EnumArgumentType<>(Difficulty.class);
-
-        String difficultyString = args.positional().get(0);
-
         try {
-            Difficulty difficulty = difficultyArgumentType.parse(difficultyString);
+            var parsed = new Command()
+                    .addPositional("difficulty", new EnumArgumentType<>(Difficulty.class))
+                    .parse(arguments);
+
+            Difficulty difficulty = parsed.get("difficulty", Difficulty.class);
             return Map.of("difficulty", difficulty.name().toLowerCase(Locale.ROOT));
         } catch (RuntimeException e) {
-            throw new RuntimeException("difficulty must be peaceful, easy, normal, or hard.");
+            throw new RuntimeException("difficulty must be peaceful, easy, normal, or hard.", e);
         }
     }
 
     public static Map<String, Object> date(String arguments) throws RuntimeException {
-        Input input = new Input(arguments);
-        BasicArgs args = input.parseBasicArgs();
-
-        if (args.positional().size() != 1 || !args.named().isEmpty()) {
-            throw new RuntimeException("date expects exactly 1 positional argument.");
-        }
-
-        CustomArgumentType<LocalDate> dateArgumentType = new CustomArgumentType<>(LocalDate::parse);
-
-        String dateString = args.positional().get(0);
-
         try {
-            LocalDate date = dateArgumentType.parse(dateString);
+            var parsed = new Command()
+                    .addPositional("date", new CustomArgumentType<>(LocalDate::parse))
+                    .parse(arguments);
+
+            LocalDate date = parsed.get("date", LocalDate.class);
             return Map.of("date", date);
         } catch (RuntimeException e) {
-            throw new RuntimeException("date argument must be a valid date.");
+            throw new RuntimeException("date argument must be a valid date.", e);
         }
     }
 

@@ -105,7 +105,7 @@ class CommandScenariosTests {
                 """, Map.of("term", "ApPlE", "case-insensitive", true)),
             Arguments.of("Named Alias", """
                 search ApPlE --i true
-                """, Map.of("term", "ApPlE", "i", true))
+                """, Map.of("term", "ApPlE", "case-insensitive", true))
         );
     }
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class Command {
 
@@ -17,12 +18,18 @@ public final class Command {
     private final Map<String, String> namedAliases = new LinkedHashMap<>();
 
     public <T> Command addPositional(String name, ArgumentType<T> type) {
+        validateArgumentName(name);
+        requireUnusedName(name);
+        Objects.requireNonNull(type, "type");
         positionalNames.add(name);
         positionalTypes.add(type);
         return this;
     }
 
     public <T> Command addPositional(String name, ArgumentType<T> type, T defaultValue) {
+        validateArgumentName(name);
+        requireUnusedName(name);
+        Objects.requireNonNull(type, "type");
         positionalNames.add(name);
         positionalTypes.add(type);
         namedDefaults.put("__positional__" + name, defaultValue);
@@ -30,17 +37,29 @@ public final class Command {
     }
 
     public <T> Command addNamed(String name, ArgumentType<T> type) {
+        validateArgumentName(name);
+        requireUnusedName(name);
+        Objects.requireNonNull(type, "type");
         namedTypes.put(name, type);
         return this;
     }
 
     public <T> Command addNamed(String name, ArgumentType<T> type, T defaultValue) {
+        validateArgumentName(name);
+        requireUnusedName(name);
+        Objects.requireNonNull(type, "type");
         namedTypes.put(name, type);
         namedDefaults.put(name, defaultValue);
         return this;
     }
 
     public Command addAlias(String alias, String canonicalName) {
+        validateArgumentName(alias);
+        validateArgumentName(canonicalName);
+        if (!namedTypes.containsKey(canonicalName)) {
+            throw new IllegalArgumentException("Cannot add alias for unknown named argument: " + canonicalName + ".");
+        }
+        requireUnusedName(alias);
         namedAliases.put(alias, canonicalName);
         return this;
     }
@@ -69,7 +88,7 @@ public final class Command {
                         } else if (next == null) {
                             named.put(canonical, "");
                         } else {
-                            throw new RuntimeException("Unexpected token after -" + name + ".");
+                            throw new CommandParseException("Unexpected token after -" + name + ".");
                         }
                     }
                 }
@@ -85,14 +104,14 @@ public final class Command {
                     } else if (next == null) {
                         named.put(canonical, "");
                     } else {
-                        throw new RuntimeException("Unexpected token after --" + name + ".");
+                        throw new CommandParseException("Unexpected token after --" + name + ".");
                     }
                 }
             }
         }
 
         if (positionals.size() > positionalNames.size()) {
-            throw new RuntimeException(
+            throw new CommandParseException(
                     "Expected " + positionalNames.size() + " positional argument(s), got " + positionals.size() + "."
             );
         }
@@ -104,9 +123,15 @@ public final class Command {
             } else if (namedDefaults.containsKey(defaultKey)) {
                 result.put(name, namedDefaults.get(defaultKey));
             } else {
-                throw new RuntimeException(
+                throw new CommandParseException(
                         "Expected " + positionalNames.size() + " positional argument(s), got " + positionals.size() + "."
                 );
+            }
+        }
+
+        for (String name : named.keySet()) {
+            if (!namedTypes.containsKey(name)) {
+                throw new CommandParseException("Unexpected named argument: --" + name + ".");
             }
         }
 
@@ -118,7 +143,7 @@ public final class Command {
                     if (namedDefaults.get(name) instanceof Boolean) {
                         result.put(name, true);
                     } else {
-                        throw new RuntimeException("Missing value for --" + name + ".");
+                        throw new CommandParseException("Missing value for --" + name + ".");
                     }
                 } else {
                     result.put(name, entry.getValue().parse(raw));
@@ -126,11 +151,24 @@ public final class Command {
             } else if (namedDefaults.containsKey(name)) {
                 result.put(name, namedDefaults.get(name));
             } else {
-                throw new RuntimeException("Missing required named argument: --" + name + ".");
+                throw new CommandParseException("Missing required named argument: --" + name + ".");
             }
         }
 
         return new ParsedCommand(result);
+    }
+
+    private void validateArgumentName(String name) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Argument name must not be blank.");
+        }
+    }
+
+    private void requireUnusedName(String name) {
+        if (positionalNames.contains(name) || namedTypes.containsKey(name) || namedAliases.containsKey(name)) {
+            throw new IllegalArgumentException("Argument name already exists: " + name + ".");
+        }
     }
 
 }
