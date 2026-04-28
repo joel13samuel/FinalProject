@@ -5,6 +5,7 @@ import oop.project.library.argument.DoubleArgumentType;
 import oop.project.library.argument.EnumArgumentType;
 import oop.project.library.argument.IntegerArgumentType;
 import oop.project.library.argument.RangedArgumentType;
+import oop.project.library.argument.RegexStringArgumentType;
 import oop.project.library.command.Command;
 
 import java.time.LocalDate;
@@ -83,6 +84,19 @@ public final class ArgumentScenarios {
             return Map.of("date", date);
         } catch (RuntimeException e) {
             throw new RuntimeException("date argument must be a valid date.", e);
+        }
+    }
+
+    public static Map<String, Object> rank(String arguments) throws RuntimeException {
+        try {
+            var parsed = new Command()
+                    .addPositional("rank", new RegexStringArgumentType("[A-Z]+-[IV]+"))
+                    .parse(arguments);
+
+            String rank = parsed.get("rank", String.class);
+            return Map.of("rank", rank);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("rank argument must match a pattern like FIRE-IV.", e);
         }
     }
 

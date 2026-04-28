@@ -129,6 +129,29 @@ class ArgumentScenariosTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource
+    public void testRank(String name, String command, Map<String, Object> expected) {
+        test(command, expected);
+    }
+
+    private static Stream<Arguments> testRank() {
+        return Stream.of(
+            Arguments.of("Valid", """
+                rank FIRE-IV
+                """, Map.of("rank", "FIRE-IV")),
+            Arguments.of("Another Valid", """
+                rank WATER-I
+                """, Map.of("rank", "WATER-I")),
+            Arguments.of("Lowercase Invalid", """
+                rank fire-4
+                """, null),
+            Arguments.of("Missing Dash Invalid", """
+                rank FIREIV
+                """, null)
+        );
+    }
+
     private static void test(String command, Map<String, Object> expected) {
         try {
             var result = Scenarios.parse(command.stripTrailing()); //trailing newline
