@@ -18,6 +18,7 @@ public final class Scenarios {
             case "difficulty" -> ArgumentScenarios.difficulty(arguments);
             case "date" -> ArgumentScenarios.date(arguments);
             case "rank" -> ArgumentScenarios.rank(arguments);
+            case "window" -> ArgumentScenarios.window(arguments);
             case "mul" -> CommandScenarios.mul(arguments);
             case "div" -> CommandScenarios.div(arguments);
             case "echo" -> CommandScenarios.echo(arguments);

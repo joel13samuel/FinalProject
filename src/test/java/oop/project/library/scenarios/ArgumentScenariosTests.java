@@ -152,6 +152,29 @@ class ArgumentScenariosTests {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource
+    public void testWindow(String name, String command, Map<String, Object> expected) {
+        test(command, expected);
+    }
+
+    private static Stream<Arguments> testWindow() {
+        return Stream.of(
+            Arguments.of("In Range", """
+                window 2024-06-15
+                """, Map.of("date", LocalDate.of(2024, 6, 15))),
+            Arguments.of("Below Range", """
+                window 2023-12-31
+                """, null),
+            Arguments.of("Above Range", """
+                window 2025-01-01
+                """, null),
+            Arguments.of("Invalid Format", """
+                window june-15-2024
+                """, null)
+        );
+    }
+
     private static void test(String command, Map<String, Object> expected) {
         try {
             var result = Scenarios.parse(command.stripTrailing()); //trailing newline

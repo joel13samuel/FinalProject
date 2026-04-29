@@ -100,4 +100,24 @@ public final class ArgumentScenarios {
         }
     }
 
+    public static Map<String, Object> window(String arguments) throws RuntimeException {
+        try {
+            var parsed = new Command()
+                    .addPositional(
+                            "date",
+                            new RangedArgumentType<>(
+                                    new CustomArgumentType<>(LocalDate::parse),
+                                    LocalDate.of(2024, 1, 1),
+                                    LocalDate.of(2024, 12, 31)
+                            )
+                    )
+                    .parse(arguments);
+
+            LocalDate date = parsed.get("date", LocalDate.class);
+            return Map.of("date", date);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("window argument must be a valid date in 2024.", e);
+        }
+    }
+
 }
