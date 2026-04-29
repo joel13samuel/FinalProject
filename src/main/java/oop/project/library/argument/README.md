@@ -11,6 +11,13 @@ Handles parsing a single String input value into typed data.
 - I also added `RangedArgumentType<T>` with a shared `RangeValidationRule<T>` so numeric ranges are modeled as one reusable abstraction instead of duplicated integer-vs-double logic.
 - I also added `ArgumentParseException` so the Argument system has a more consistent way to represent parsing and validation failures. Before that, everything was just throwing generic `RuntimeException`, which worked but did not really feel like a clear library design.
 - I still think one weakness is that some error translation happens outside the Argument system, especially in the scenario layer. The Argument side is cleaner now, but the whole project still is not fully consistent about error handling from top to bottom.
+- A good example of that abstraction is the `window` scenario siunce it uses the same range validation design with `LocalDate` instead of only `Integer` or `Double`.
+
+## MVP / Showcase Scenarios
+
+For the Argument side MVP work, the `rank` scenario is the one we used to show regex string validation. It runs through the library and only accepts values in a specific format.
+
+For the Argument side feature showcase, the `window` scenario shows that our range validation design doesn't have to stick to numbers. It uses `RangedArgumentType<T>` with `CustomArgumentType<LocalDate>` to check whether a parsed date falls within an allowed range. This goes further than the original assignment spec because the range feature was only meant for `Integer` and `Double`.
 
 ## PoC Design Analysis
 
