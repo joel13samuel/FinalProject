@@ -16,6 +16,7 @@ public final class Command {
     private final Map<String, ArgumentType<?>> namedTypes = new LinkedHashMap<>();
     private final Map<String, Object> namedDefaults = new LinkedHashMap<>();
     private final Map<String, String> namedAliases = new LinkedHashMap<>();
+    private final Map<String, Command> subcommands = new LinkedHashMap<>();
 
     public <T> Command addPositional(String name, ArgumentType<T> type) {
         validateArgumentName(name);
@@ -64,7 +65,24 @@ public final class Command {
         return this;
     }
 
+    public Command addSubcommand(String name, Command subcommand) {
+        validateArgumentName(name);
+        Objects.requireNonNull(subcommand, "subcommand");
+        subcommands.put(name, subcommand);
+        return this;
+    }
+
     public ParsedCommand parse(String arguments) {
+        // if subcommands are registered, delegate to the matching one
+        if (!subcommands.isEmpty()) {
+            var input = new Input(arguments);
+            Input.Value first = input.parseValue().orElse(null);
+            if (first instanceof Input.Value.Literal(String name) && subcommands.containsKey(name)) {
+                return subcommands.get(name).parse(arguments);
+            }
+            throw new CommandParseException("Unknown subcommand: " + (first == null ? "<none>" : first) + ".");
+        }
+
         var input = new Input(arguments);
         var result = new LinkedHashMap<String, Object>();
 
@@ -77,7 +95,6 @@ public final class Command {
                 case Input.Value.Literal(String v) -> positionals.add(v);
                 case Input.Value.QuotedString(String v) -> positionals.add(v);
                 case Input.Value.SingleFlag(String name) -> {
-                    // treat -N or -N.N as a negative number literal, not a flag
                     if (name.matches("\\d+(\\.\\d+)?")) {
                         positionals.add("-" + name);
                     } else {
@@ -99,7 +116,6 @@ public final class Command {
                         named.put(canonical, v);
                     } else if (next instanceof Input.Value.SingleFlag(String flagName)
                             && flagName.matches("\\d+(\\.\\d+)?")) {
-                        // e.g. --left -1.5: the -1.5 was parsed as SingleFlag("1.5")
                         named.put(canonical, "-" + flagName);
                     } else if (next == null) {
                         named.put(canonical, "");
