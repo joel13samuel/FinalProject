@@ -18,6 +18,17 @@ public final class Command {
     private final Map<String, String> namedAliases = new LinkedHashMap<>();
     private final Map<String, Command> subcommands = new LinkedHashMap<>();
 
+    /**
+     * Adds a required positional argument to this command.
+     * Positional arguments are parsed in the order they are added.
+     * The argument value is parsed using the provided {@link ArgumentType}.
+     *
+     * @param name the name of the argument, used as the key in the parsed result map
+     * @param type the {@link ArgumentType} used to parse and validate the argument value
+     * @param <T>  the type produced by parsing
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if the name is blank or already in use
+     */
     public <T> Command addPositional(String name, ArgumentType<T> type) {
         validateArgumentName(name);
         requireUnusedName(name);
@@ -27,6 +38,17 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Adds an optional positional argument with a default value to this command.
+     * If the argument is not provided, the default value is used in the parsed result.
+     *
+     * @param name         the name of the argument, used as the key in the parsed result map
+     * @param type         the {@link ArgumentType} used to parse and validate the argument value
+     * @param defaultValue the value to use if the argument is not provided
+     * @param <T>          the type produced by parsing
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if the name is blank or already in use
+     */
     public <T> Command addPositional(String name, ArgumentType<T> type, T defaultValue) {
         validateArgumentName(name);
         requireUnusedName(name);
@@ -37,6 +59,17 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Adds a required named argument to this command.
+     * Named arguments are passed using {@code --name value} syntax.
+     * The argument value is parsed using the provided {@link ArgumentType}.
+     *
+     * @param name the name of the argument, used as the key in the parsed result map
+     * @param type the {@link ArgumentType} used to parse and validate the argument value
+     * @param <T>  the type produced by parsing
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if the name is blank or already in use
+     */
     public <T> Command addNamed(String name, ArgumentType<T> type) {
         validateArgumentName(name);
         requireUnusedName(name);
@@ -45,6 +78,20 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Adds an optional named argument with a default value to this command.
+     * Named arguments are passed using {@code --name value} syntax.
+     * If the argument is not provided, the default value is used in the parsed result.
+     * Boolean named arguments support no-value flag syntax (e.g. {@code --flag} or {@code -flag})
+     * which sets the value to {@code true}.
+     *
+     * @param name         the name of the argument, used as the key in the parsed result map
+     * @param type         the {@link ArgumentType} used to parse and validate the argument value
+     * @param defaultValue the value to use if the argument is not provided
+     * @param <T>          the type produced by parsing
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if the name is blank or already in use
+     */
     public <T> Command addNamed(String name, ArgumentType<T> type, T defaultValue) {
         validateArgumentName(name);
         requireUnusedName(name);
@@ -54,6 +101,17 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Adds an alias for an existing named argument.
+     * The alias can be used interchangeably with the canonical name when parsing.
+     * The result map always uses the canonical name as the key.
+     *
+     * @param alias         the alias to register
+     * @param canonicalName the canonical named argument this alias maps to
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if either name is blank, the canonical name is not registered,
+     *                                  or the alias is already in use
+     */
     public Command addAlias(String alias, String canonicalName) {
         validateArgumentName(alias);
         validateArgumentName(canonicalName);
@@ -65,6 +123,17 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Adds a named subcommand to this command.
+     * When subcommands are registered, the first token of the input is used to select
+     * which subcommand to delegate parsing to. Each subcommand can have its own
+     * argument structure.
+     *
+     * @param name       the subcommand name, matched against the first input token
+     * @param subcommand the {@code Command} defining the subcommand's argument structure
+     * @return this {@code Command} instance for chaining
+     * @throws IllegalArgumentException if the name is blank
+     */
     public Command addSubcommand(String name, Command subcommand) {
         validateArgumentName(name);
         Objects.requireNonNull(subcommand, "subcommand");
@@ -72,8 +141,18 @@ public final class Command {
         return this;
     }
 
+    /**
+     * Parses the given argument string according to this command's registered arguments.
+     * Positional arguments are matched by position; named arguments are matched by
+     * {@code --name value} or {@code -name} syntax. Aliases are resolved to their
+     * canonical names. If subcommands are registered, the first token selects the
+     * subcommand and the rest of the string is delegated to it.
+     *
+     * @param arguments the raw argument string to parse (not including the command name)
+     * @return a {@link ParsedCommand} containing the parsed and typed argument values
+     * @throws CommandParseException if the arguments are invalid, missing, or unexpected
+     */
     public ParsedCommand parse(String arguments) {
-        // if subcommands are registered, delegate to the matching one
         if (!subcommands.isEmpty()) {
             var input = new Input(arguments);
             Input.Value first = input.parseValue().orElse(null);

@@ -24,6 +24,7 @@ public final class Scenarios {
             case "echo" -> CommandScenarios.echo(arguments);
             case "search" -> CommandScenarios.search(arguments);
             case "dispatch" -> CommandScenarios.dispatch(arguments);
+            case "action" -> CommandScenarios.action(arguments);
             default -> throw new AssertionError(base);
         };
     }

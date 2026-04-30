@@ -67,4 +67,34 @@ public final class CommandScenarios {
         }
     }
 
+    /**
+     * Showcase: demonstrates subcommand-based argument parsing where each subcommand
+     * has a completely different argument structure. The "move" subcommand takes two
+     * integer coordinates, while the "say" subcommand takes a string message and an
+     * optional boolean flag. This shows that the Command system supports dynamic
+     * dispatch to different argument definitions based on the first token, without
+     * any manual parsing logic in the scenario itself.
+     *
+     * Examples:
+     *   action move 3 5        -> {action=move, x=3, y=5}
+     *   action say hello       -> {action=say, message=hello, loud=false}
+     *   action say hello -loud -> {action=say, message=hello, loud=true}
+     */
+    public static Map<String, Object> action(String arguments) throws RuntimeException {
+        try {
+            var command = new Command()
+                    .addSubcommand("move", new Command()
+                            .addPositional("action", new ChoiceStringArgumentType(List.of("move")))
+                            .addPositional("x", new IntegerArgumentType())
+                            .addPositional("y", new IntegerArgumentType()))
+                    .addSubcommand("say", new Command()
+                            .addPositional("action", new ChoiceStringArgumentType(List.of("say")))
+                            .addPositional("message", new StringArgumentType())
+                            .addNamed("loud", new BooleanArgumentType(), false));
+            return command.parse(arguments).toMap();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
 }
