@@ -10,11 +10,23 @@ Instead of trying to handle everything in one large parse method, I split the lo
 
 For Part 2, I added support for aliases through `addAlias(alias, canonical)` so the Command system handles alias resolution internally rather than pushing that work into the scenarios. I also added support for optional positionals and named arguments with defaults, so things like `echo` with no arguments work cleanly without special cases in the scenario.
 
-One design change that mattered more this time was making sure all scenario parsing goes through the `Command` system rather than having scenarios call `ArgumentType.parse()` directly. The `dispatch` scenario is still a good example of the current limitation — it uses a two-pass approach where the first parse gets the type and the second parse uses the right `ArgumentType` for the value.
+State management was also improved: positional and named arguments are now stored as `PositionalArgument` and `NamedArgument` records that bundle the name, type, and default value together. This removed the previous separate lists and the `"__positional__"` prefix hack, and made it easier to reason about each argument as a single unit.
 
-I also standardized how exceptions are handled across all scenarios. Every scenario method wraps its logic in try/catch and rethrows from within the `scenarios` package, because the test framework checks that exceptions originate there. Before that change, failures deeper in the library were being flagged as unexpected.
+Subcommand support was added through `addSubcommand(name, subcommand)`, which lets a `Command` delegate to a different command structure based on the first input token. The `dispatch` scenario uses this directly — `static` and `dynamic` are registered as subcommands with different `ArgumentType` configurations, so the scenario never does any manual parsing itself.
 
-One weakness I still see is that subcommand-style behavior is not a first-class part of `Command`. The current two-pass `dispatch` solution works, but the coordination still lives in the scenario layer instead of in the command abstraction itself.
+I also standardized how exceptions are handled across all scenarios. Every scenario method wraps its logic in try/catch and rethrows from within the `scenarios` package, because the test framework checks that exceptions originate there.
+
+One weakness I still see is the boolean no-value flag check inside `Command.parse` — detecting `instanceof Boolean` in the default value to decide whether a flag with no value is valid is technically the Command system making a type-specific decision. It works, but it is a design tradeoff worth noting.
+
+## Feature Showcase
+
+The `action` scenario demonstrates the subcommand abstraction built into `Command`. It registers two subcommands — `move` and `say` — each with a completely different argument structure:
+
+- `action move 3 5` parses `x` and `y` as integers
+- `action say hello` parses `message` as a string with an optional `--loud` boolean flag
+- `action say hello -loud` sets the loud flag to true without a value
+
+This shows that the Command system can dispatch to different typed argument definitions based on the first token, with no manual parsing or if-branching in the scenario itself. The full structure — including types, defaults, and flags — is declared in the command definition.
 
 ## Individual Review
 
@@ -23,17 +35,16 @@ One weakness I still see is that subcommand-style behavior is not a first-class 
 **Good decisions (Command System):**
 
 - Alias resolution is built into `Command` through `addAlias(alias, canonical)` rather than being handled in each scenario. No matter which alias the user types, the result map always uses the canonical key. We could have handled this in the scenarios themselves, but putting it in the command definition keeps the scenarios cleaner and makes aliases reusable.
-- The `Command` builder separates positional and named argument declarations clearly. Positionals are ordered and index-based, named arguments are looked up by key. That separation made the parsing logic easier to reason about and mirrors how most real CLI tools work.
-- The `Command` builder now validates configuration mistakes like duplicate argument names and invalid aliases when the command is declared. That catches misuse at definition time instead of waiting for a confusing parse-time failure.
+- The `Command` builder now validates configuration mistakes like duplicate argument names and invalid aliases when the command is declared, not at parse time. That catches misuse eagerly and gives a clear error message at the point where the mistake was made.
 
 **Bad decisions (Command System):**
 
-- Positional and named defaults are stored in the same map with a `"__positional__"` prefix to tell them apart. It works, but it is a hack. They are conceptually different and probably should have been stored separately from the beginning.
-- Subcommand behavior is still not modeled directly in `Command`. The `dispatch` scenario uses two different command shapes selected by an initial parse, which is workable but repetitive.
+- The boolean no-value flag behavior is detected by checking `instanceof Boolean` on the default value inside `parse`. That means the Command system is making a type-specific decision instead of delegating it to the argument type. A cleaner design would let the `ArgumentType` signal whether it supports no-value input.
+- `ParsedCommand` stores values in a `Map<String, Object>` internally. The checked `get(name, Class<T>)` helps, but the structure is still runtime-typed. A fully statically typed result would require rethinking how command definitions are stored.
 
 **Good decision (Argument System):**
 
-- `ValidationRule<T>` and `ValidatedArgumentType<T>` are strong design decisions. Instead of making a new class every time a new validation rule is needed, the system can wrap any existing type and layer reusable validation on top.
+- `ValidatedArgumentType<T>` is a strong design decision. Instead of making a new class every time a new validation rule is needed, the system can wrap any existing type and layer reusable validation on top.
 
 **Bad decision (Argument System):**
 
@@ -45,21 +56,21 @@ One weakness I still see is that subcommand-style behavior is not a first-class 
 
 **Good decisions (Argument System):**
 
-- One design decision I still think worked well on the Argument side was building everything around `ArgumentType<T>`. That gave all of the parsers the same general shape, and it also meant the Command side could rely on one interface instead of needing special handling for every type.
+- One design decision that worked well on the Argument side was building everything around `ArgumentType<T>`. That gave all of the parsers the same general shape, and it also meant the Command side could rely on one interface instead of needing special handling for every type.
 - Another good design decision was separating validation into reusable `ValidationRule<T>` objects. That made the validation side feel a lot more reusable, because things like ranges, regex checks, and choice checks do not all need completely separate parsing logic anymore.
 
 **Bad decisions (Argument System):**
 
 - One weaker design decision is that the API still exposes both convenience wrappers and lower-level generic validation types. The implementation is unified now, but the surface area still gives multiple ways to do similar things.
-- Another weaker design decision is that some exception translation still happens outside the Argument system, especially in the scenario layer. The Argument side is cleaner now, but it still is not fully in control of how its errors are presented in the final scenarios.
+- Another weaker decision is that some exception translation still happens outside the Argument system, especially in the scenario layer. The Argument side is cleaner now, but it still is not fully in control of how its errors are presented in the final scenarios.
 
 **Good decision (Command System):**
 
-- One good design decision in the Command system is separating the command definition from the parsed result with `Command` and `ParsedCommand`. I think that keeps the structure of a command and the values produced by parsing from getting mixed together, and `ParsedCommand.get(name, Class<T>)` now makes typed extraction clearer.
+- Separating the command definition from the parsed result with `Command` and `ParsedCommand` keeps the structure of a command and the values produced by parsing from getting mixed together. `ParsedCommand.get(name, Class<T>)` makes typed extraction clearer and gives a useful error message when the wrong type is requested.
 
 **Bad decision (Command System):**
 
-- One weaker design decision in the Command system is that `ParsedCommand` still stores values in a `Map<String, Object>` internally. The checked getter helps, but the structure is still runtime-typed rather than statically encoding the command shape.
+- State in `Command` is mutable throughout the object's lifetime since there is no way to finalize or lock a command definition after construction. That means nothing prevents adding arguments after a parse has already been called, which could lead to inconsistent behavior.
 
 ---
 
@@ -67,7 +78,7 @@ One weakness I still see is that subcommand-style behavior is not a first-class 
 
 **Current disagreement:**
 
-We still disagree on how subcommand behavior should be handled going forward. Right now `dispatch` uses two separate `Command` parses to handle the fact that the type of `value` depends on `type`. It works but it is repetitive and puts coordination logic in the scenario. The other option is building subcommand support directly into `Command` so different argument structures can be registered per subcommand name. That would be a cleaner API but a significantly bigger change to implement. We have not agreed on which direction to take for MVP.
+We disagree on how much the `Command` API should enforce about command structure at definition time versus parse time. One view is that commands should be as easy to define as possible, with validation happening when `parse` is called. The other view is that more constraints should be caught eagerly — for example, preventing required positionals from being added after optional ones. We have not settled on how strict the builder should be.
 
 **Current design concern:**
 
